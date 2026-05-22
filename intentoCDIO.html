@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ErgoMine - Demo de monitoreo ergonómico</title>
+  <style>
+    :root{
+      --blue:#173B6D;
+      --green:#2E8B57;
+      --red:#D9534F;
+      --light-blue:#4A90E2;
+      --card:#FFFFFF;
+      --text:#1E293B;
+      --muted:#64748B;
+      --border:#D9E2EC;
+      --shadow:0 10px 25px rgba(23,59,109,.10);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:linear-gradient(180deg,#f7fafc 0%, #edf2f7 100%);
+      color:var(--text);
+    }
+
+    .app{
+      max-width:1440px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    .topbar{
+      background:linear-gradient(135deg,var(--blue),#0f2e57);
+      color:#fff;
+      border-radius:24px;
+      padding:22px 26px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:20px;
+      box-shadow:var(--shadow);
+      margin-bottom:22px;
+      flex-wrap:wrap;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:34px;
+    }
+
+    .brand p{
+      margin:6px 0 0;
+      color:rgba(255,255,255,.84);
+      font-size:15px;
+    }
+
+    .badge-row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .badge{
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      padding:10px 14px;
+      border-radius:16px;
+      min-width:140px;
+    }
+
+    .badge b{
+      display:block;
+      font-size:22px;
+      margin-bottom:2px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:22px;
+    }
+
+    .left-column,.right-column{
+      display:flex;
+      flex-direction:column;
+      gap:22px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:20px;
+    }
+
+    .section-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:18px;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .section-title h2{
+      margin:0;
+      font-size:24px;
+      color:var(--blue);
+    }
+
+    .muted{color:var(--muted)}
+
+    .mini-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    button{
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      padding:11px 14px;
+      font-weight:700;
+      transition:.2s ease;
+    }
+
+    button:hover{transform:translateY(-1px)}
+
+    .btn-blue{background:var(--blue); color:#fff}
+    .btn-green{background:var(--green); color:#fff}
+    .btn-light{background:#eef4ff; color:var(--blue); border:1px solid #d6e5ff}
+    .btn-red{background:var(--red); color:#fff}
+
+    .stations{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(220px,1fr));
+      gap:16px;
+    }
+
+    .station{
+      border:1px solid var(--border);
+      border-radius:18px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    .station-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:#f8fbff;
+    }
+
+    .station-title{
+      font-weight:700;
+      color:var(--blue);
+      font-size:16px;
+    }
+
+    .status-pill{
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      color:#fff;
+    }
+
+    .pill-green{background:var(--green)}
+    .pill-blue{background:var(--light-blue)}
+    .pill-red{background:var(--red)}
+
+    .camera-view{
+      height:170px;
+      background:linear-gradient(135deg,#e6edf5,#cfd9e6);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .camera-label{
+      position:absolute;
+      top:10px; left:10px;
+      background:rgba(23,59,109,.86);
+      color:#fff;
+      padding:6px 10px;
+      border-radius:10px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .worker{
+      position:absolute;
+      bottom:18px;
+      width:64px;
+      height:108px;
+      border-radius:18px 18px 10px 10px;
+      background:#274c77;
+      box-shadow:inset 0 -12px 0 rgba(255,255,255,.08);
+    }
+
+    .worker::before{
+      content:"";
+      position:absolute;
+      top:-28px; left:16px;
+      width:32px; height:32px;
+      background:#f1c27d;
+      border-radius:50%;
+    }
+
+    .machine{
+      position:absolute;
+      bottom:16px;
+      width:72px;
+      height:46px;
+      background:#d9e2ec;
+      border-radius:10px;
+      border:2px solid #b7c5d6;
+    }
+
+    .worker .line{
+      position:absolute;
+      left:50%;
+      top:16px;
+      width:4px;
+      height:66px;
+      transform:translateX(-50%);
+      border-radius:5px;
+      background:#7dd3fc;
+    }
+
+    .worker.risk .line{
+      background:#ff6b6b;
+      transform:translateX(-50%) rotate(18deg);
+      transform-origin:top center;
+    }
+
+    .worker.pause .line{ background:#60a5fa; }
+    .worker.good .line{ background:#34d399; }
+
+    .scan-cam{
+      position:absolute;
+      top:20px;
+      left:50%;
+      transform:translateX(-50%);
+      width:54px;
+      height:36px;
+      background:#111827;
+      border-radius:10px;
+      box-shadow:0 8px 20px rgba(0,0,0,.24);
+    }
+
+    .scan-cam::before{
+      content:"";
+      position:absolute;
+      width:18px;
+      height:18px;
+      border-radius:50%;
+      background:#334155;
+      top:8px; left:18px;
+      border:2px solid #94a3b8;
+    }
+
+    .scan-beam{
+      position:absolute;
+      top:50px;
+      left:50%;
+      transform:translateX(-50%);
+      width:310px;
+      height:110px;
+      background:linear-gradient(180deg, rgba(74,144,226,.35), rgba(74,144,226,0));
+      clip-path:polygon(50% 0, 100% 100%, 0 100%);
+    }
+
+    .station-content{
+      padding:16px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .metric{
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .metric b{
+      display:block;
+      font-size:14px;
+      margin-bottom:4px;
+      color:var(--blue);
+    }
+
+    .metric span{
+      font-size:14px;
+      color:var(--muted);
+    }
+
+    .env-grid,.impact-grid,.requirements-grid,.prototype-grid{
+      display:grid;
+      gap:14px;
+    }
+
+    .env-grid{ grid-template-columns:repeat(2,1fr); }
+    .impact-grid{ grid-template-columns:repeat(3,1fr); }
+    .requirements-grid{ grid-template-columns:repeat(2,1fr); }
+    .prototype-grid{ grid-template-columns:1fr 1fr; }
+
+    .small-card{
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+      background:#fff;
+    }
+
+    .small-card h4{
+      margin:0 0 10px;
+      color:var(--blue);
+      font-size:17px;
+    }
+
+    .small-card .big{
+      font-size:28px;
+      font-weight:800;
+      margin:8px 0;
+    }
+
+    .state-panel{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .risk-box{
+      border-radius:18px;
+      padding:18px;
+      color:#fff;
+    }
+
+    .risk-low{background:var(--green)}
+    .risk-medium{background:var(--light-blue)}
+    .risk-high{background:var(--red)}
+
+    .risk-box .label{
+      font-size:13px;
+      opacity:.88;
+    }
+
+    .risk-box .value{
+      font-size:32px;
+      font-weight:800;
+      margin-top:5px;
+    }
+
+    .alerts-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height:340px;
+      overflow:auto;
+    }
+
+    .alert-item{
+      border-left:6px solid var(--red);
+      background:#fff5f5;
+      padding:12px 14px;
+      border-radius:14px;
+      font-size:14px;
+    }
+
+    .alert-item.blue{
+      border-left-color:var(--light-blue);
+      background:#f1f7ff;
+    }
+
+    .alert-item.green{
+      border-left-color:var(--green);
+      background:#f3fff7;
+    }
+
+    .flow{
+      display:grid;
+      grid-template-columns:repeat(11,1fr);
+      gap:10px;
+      align-items:center;
+    }
+
+    .flow-step{
+      padding:14px 12px;
+      text-align:center;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      min-height:96px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      color:var(--blue);
+      font-size:14px;
+    }
+
+    .flow-arrow{
+      text-align:center;
+      font-size:26px;
+      color:var(--green);
+      font-weight:900;
+    }
+
+    .tag{
+      display:inline-block;
+      padding:5px 10px;
+      background:#eaf6ef;
+      color:var(--green);
+      border-radius:999px;
+      font-size:12px;
+      font-weight:700;
+      margin-bottom:10px;
+    }
+
+    .prototype-box{
+      min-height:260px;
+      border:1px solid var(--border);
+      border-radius:20px;
+      background:linear-gradient(160deg,#ffffff,#f7fbff);
+      padding:16px;
+      overflow:hidden;
+    }
+
+    .prototype-box h4{
+      margin:0 0 10px;
+      color:var(--blue);
+    }
+
+    .phone{
+      width:220px;
+      margin:12px auto 0;
+      border-radius:32px;
+      background:#111827;
+      padding:12px;
+      box-shadow:0 20px 30px rgba(15,23,42,.22);
+    }
+
+    .phone-screen{
+      background:#fff;
+      min-height:360px;
+      border-radius:24px;
+      padding:14px;
+    }
+
+    .screen-title{
+      font-weight:800;
+      color:var(--blue);
+      margin-bottom:14px;
+      font-size:18px;
+    }
+
+    .screen-box{
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
+      margin-bottom:10px;
+    }
+
+    .screen-status{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:14px;
+      margin-bottom:8px;
+    }
+
+    .dot{
+      width:12px; height:12px;
+      border-radius:50%;
+      display:inline-block;
+    }
+
+    .dot.green{background:var(--green)}
+    .dot.blue{background:var(--light-blue)}
+    .dot.red{background:var(--red)}
+
+    .mini-bars{
+      display:flex;
+      gap:8px;
+      align-items:flex-end;
+      height:70px;
+      margin-top:8px;
+    }
+
+    .mini-bars div{
+      flex:1;
+      background:linear-gradient(180deg,var(--light-blue),var(--blue));
+      border-radius:8px 8px 0 0;
+    }
+
+    .footer-note{
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    ul.tight{
+      margin:8px 0 0 18px;
+      padding:0;
+      color:#334155;
+    }
+
+    ul.tight li{ margin-bottom:6px; }
+
+    .cost-table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+
+    .cost-table th, .cost-table td{
+      border-bottom:1px solid var(--border);
+      padding:10px 8px;
+      text-align:left;
+    }
+
+    .cost-table th{
+      color:var(--blue);
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.3px;
+    }
+
+    @media (max-width:1200px){
+      .grid{ grid-template-columns:1fr; }
+      .stations,
+      .env-grid,
+      .impact-grid,
+      .requirements-grid,
+      .prototype-grid,
+      .state-panel{
+        grid-template-columns:1fr;
+      }
+      .flow{ grid-template-columns:1fr; }
+      .flow-arrow{ transform:rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>ErgoMine</h1>
+        <p>Centro de monitoreo ergonómico inteligente para talleres satélite del sector textil colombiano</p>
+      </div>
+      <div class="badge-row">
+        <div class="badge"><b>4</b> estaciones monitoreadas</div>
+        <div class="badge"><b>IA</b> clasificación de riesgo</div>
+        <div class="badge"><b>Tiempo real</b> alertas visuales</div>
+        <div class="badge"><b>Bajo costo</b> enfoque viable</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="left-column">
+        <section class="card">
+          <div class="section-title">
+            <h2>Monitoreo del taller</h2>
+            <div class="mini-actions">
+              <button class="btn-light" onclick="setScenario('normal')">Jornada normal</button>
+              <button class="btn-blue" onclick="setScenario('pause')">Simular pausa activa</button>
+              <button class="btn-red" onclick="setScenario('risk')">Simular riesgo ergonómico</button>
+              <button class="btn-green" onclick="setScenario('mixed')">Escenario mixto</button>
+            </div>
+          </div>
+          <div class="stations" id="stations"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>¿Cómo funciona ErgoMine?</h2>
+          </div>
+          <div class="flow">
+            <div class="flow-step">1. Cámara captura postura</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">2. IA analiza movimientos y posición corporal</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">3. Clasifica el riesgo ergonómico</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">4. Activa alerta visual por color</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">5. Registra datos para SST</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">6. Sugiere recomendaciones y pausas activas</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>Condiciones ambientales</h2>
+            <span class="muted">Simulación de iluminación y ruido por puesto</span>
+          </div>
+          <div class="env-grid" id="envGrid"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>Prototipos visuales integrados</h2>
+            <span class="muted">Dashboard, alertas y seguimiento</span>
+          </div>
+          <div class="prototype-grid">
+            <div class="prototype-box">
+              <span class="tag">Prototipo 1</span>
+              <h4>Vista de monitoreo</h4>
+              <div class="camera-view" style="height:180px;border-radius:18px;">
+                <div class="camera-label">Cámara principal</div>
+                <div class="scan-cam"></div>
+                <div class="scan-beam"></div>
+                <div class="worker good" style="left:18px;"><div class="line"></div></div>
+                <div class="machine" style="left:78px;"></div>
+                <div class="worker risk" style="left:164px;"><div class="line"></div></div>
+                <div class="machine" style="left:224px;"></div>
+                <div class="worker pause" style="left:310px;"><div class="line"></div></div>
+                <div class="machine" style="left:370px;"></div>
+                <div class="worker good" style="left:456px;"><div class="line"></div></div>
+                <div class="machine" style="left:516px;"></div>
+              </div>
+              <ul class="tight">
+                <li>Detección automática de postura</li>
+                <li>Clasificación de riesgo por color</li>
+                <li>Supervisión continua para SST</li>
+              </ul>
+            </div>
+
+            <div class="prototype-box">
+              <span class="tag">Prototipo 2</span>
+              <h4>App de recomendaciones</h4>
+              <div class="phone">
+                <div class="phone-screen">
+                  <div class="screen-title">Asistente ergonómico</div>
+                  <div class="screen-box">Hola, detectamos inclinación de cuello en la estación 2.</div>
+                  <div class="screen-box">Recomendación: ajusta la silla y realiza una pausa activa de 5 minutos.</div>
+                  <div class="screen-box">
+                    <div class="screen-status"><span class="dot red"></span> Riesgo alto</div>
+                    <div class="screen-status"><span class="dot blue"></span> Pausa recomendada</div>
+                    <div class="screen-status"><span class="dot green"></span> Seguimiento habilitado</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="prototype-box">
+              <span class="tag">Prototipo 3</span>
+              <h4>Panel de bienestar y progreso</h4>
+              <div class="phone">
+                <div class="phone-screen">
+                  <div class="screen-title">Tu progreso</div>
+                  <div class="screen-box">
+                    <b>Pausas completadas</b>
+                    <div class="big" style="font-size:34px;color:var(--green);margin-top:8px;">3/5</div>
+                  </div>
+                  <div class="screen-box">
+                    <b>Historial semanal</b>
+                    <div class="mini-bars">
+                      <div style="height:45%"></div>
+                      <div style="height:65%"></div>
+                      <div style="height:35%"></div>
+                      <div style="height:72%"></div>
+                      <div style="height:55%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="prototype-box">
+              <span class="tag">IA + SST</span>
+              <h4>Capacidades principales</h4>
+              <ul class="tight">
+                <li>Detección de posturas incorrectas</li>
+                <li>Análisis de movimientos repetitivos</li>
+                <li>Alertas no invasivas por colores</li>
+                <li>Monitoreo de iluminación y ruido</li>
+                <li>Registro útil para el personal de SST</li>
+                <li>Enfoque de bajo costo y fácil instalación</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="right-column">
+        <section class="card">
+          <div class="section-title">
+            <h2>Estado general del sistema</h2>
+          </div>
+          <div class="state-panel">
+            <div class="risk-box risk-low">
+              <div class="label">Estaciones seguras</div>
+              <div class="value" id="safeCount">2</div>
+            </div>
+            <div class="risk-box risk-medium">
+              <div class="label">Pausas / descanso</div>
+              <div class="value" id="pauseCount">1</div>
+            </div>
+            <div class="risk-box risk-high">
+              <div class="label">Riesgos detectados</div>
+              <div class="value" id="riskCount">1</div>
+            </div>
+            <div class="small-card">
+              <h4>Riesgo global del taller</h4>
+              <div class="big" id="globalRisk">MEDIO</div>
+              <div class="footer-note">La IA clasifica el riesgo según postura, tiempo continuo sin descanso, iluminación y nivel de ruido.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>Alertas inteligentes</h2>
+            <button class="btn-light" onclick="addRandomAlert()">Generar alerta</button>
+          </div>
+          <div class="alerts-list" id="alerts"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>Requerimientos de diseño</h2>
+          </div>
+          <div class="requirements-grid">
+            <div class="small-card">
+              <h4>Funcionales</h4>
+              <ul class="tight">
+                <li>Monitoreo en tiempo real</li>
+                <li>Detección de posturas incorrectas</li>
+                <li>Análisis de iluminación y ruido</li>
+                <li>Alertas visuales por color</li>
+                <li>Registro de eventos y reportes</li>
+              </ul>
+            </div>
+            <div class="small-card">
+              <h4>No funcionales</h4>
+              <ul class="tight">
+                <li>Bajo costo</li>
+                <li>Fácil instalación</li>
+                <li>Uso intuitivo</li>
+                <li>Capacitación mínima</li>
+                <li>Seguridad de datos</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>Beneficios esperados</h2>
+          </div>
+          <div class="impact-grid">
+            <div class="small-card">
+              <h4>Salud</h4>
+              <div class="footer-note">Reduce lesiones musculoesqueléticas, fatiga visual y riesgo acumulativo.</div>
+            </div>
+            <div class="small-card">
+              <h4>Productividad</h4>
+              <div class="footer-note">Ayuda a tomar decisiones preventivas sin frenar totalmente la operación.</div>
+            </div>
+            <div class="small-card">
+              <h4>SST</h4>
+              <div class="footer-note">Entrega datos útiles para seguimiento, priorización y mejora del puesto de trabajo.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>Viabilidad aproximada</h2>
+          </div>
+          <table class="cost-table">
+            <thead>
+              <tr>
+                <th>Componente</th>
+                <th>Función</th>
+                <th>Enfoque</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Cámaras básicas</td><td>Captura de postura</td><td>Bajo costo</td></tr>
+              <tr><td>Interfaz web</td><td>Monitoreo y alertas</td><td>Uso intuitivo</td></tr>
+              <tr><td>Procesamiento IA</td><td>Clasificación del riesgo</td><td>Escalable</td></tr>
+              <tr><td>Luces/alertas</td><td>Señal visual inmediata</td><td>No invasivo</td></tr>
+              <tr><td>Mantenimiento básico</td><td>Continuidad del sistema</td><td>Viable para PyME</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const baseStations = [
+      { id: 1, worker: "Operario 1", posture: "Adecuada", movement: "Normal", state: "green", lighting: 82, noise: 48, tip:"Mantener postura actual." },
+      { id: 2, worker: "Operario 2", posture: "Inclinación de cuello", movement: "Repetitivo", state: "red", lighting: 56, noise: 67, tip:"Ajustar altura de silla y realizar pausa activa." },
+      { id: 3, worker: "Operario 3", posture: "Descanso", movement: "Pausa activa", state: "blue", lighting: 79, noise: 45, tip:"Pausa activa en progreso." },
+      { id: 4, worker: "Operario 4", posture: "Adecuada", movement: "Normal", state: "green", lighting: 76, noise: 52, tip:"Continuar monitoreo." }
+    ];
+
+    let stations = JSON.parse(JSON.stringify(baseStations));
+
+    const stationClass = s => s.state === 'green' ? 'pill-green' : s.state === 'blue' ? 'pill-blue' : 'pill-red';
+    const stationLabel = s => s.state === 'green' ? 'Adecuado' : s.state === 'blue' ? 'Pausa activa' : 'Riesgo';
+    const workerClass = s => s.state === 'green' ? 'good' : s.state === 'blue' ? 'pause' : 'risk';
+
+    function renderStations() {
+      const container = document.getElementById('stations');
+      container.innerHTML = stations.map(s => `
+        <div class="station">
+          <div class="station-header">
+            <div>
+              <div class="station-title">Estación ${s.id}</div>
+              <div class="muted" style="font-size:13px">${s.worker}</div>
+            </div>
+            <span class="status-pill ${stationClass(s)}">${stationLabel(s)}</span>
+          </div>
+
+          <div class="camera-view">
+            <div class="camera-label">Monitoreo en tiempo real</div>
+            <div class="scan-cam"></div>
+            <div class="scan-beam"></div>
+            <div class="worker ${workerClass(s)}" style="left:34px;"><div class="line"></div></div>
+            <div class="machine" style="left:100px;"></div>
+            <div class="worker good" style="left:170px; opacity:.28;"><div class="line"></div></div>
+            <div class="machine" style="left:236px; opacity:.28;"></div>
+            <div class="worker good" style="left:306px; opacity:.24;"><div class="line"></div></div>
+            <div class="machine" style="left:372px; opacity:.24;"></div>
+          </div>
+
+          <div class="station-content">
+            <div class="metric"><b>Postura</b><span>${s.posture}</span></div>
+            <div class="metric"><b>Movimiento</b><span>${s.movement}</span></div>
+            <div class="metric"><b>Iluminación</b><span>${s.lighting}%</span></div>
+            <div class="metric"><b>Ruido</b><span>${s.noise} dB</span></div>
+            <div class="metric" style="grid-column:1 / -1"><b>Recomendación IA</b><span>${s.tip}</span></div>
+          </div>
+        </div>
+      `).join('');
+      renderEnvironment();
+      updateSummary();
+    }
+
+    function renderEnvironment(){
+      const env = document.getElementById('envGrid');
+      env.innerHTML = stations.map(s => `
+        <div class="small-card">
+          <h4>Estación ${s.id}</h4>
+          <div class="screen-status"><span class="dot ${s.state}"></span> ${stationLabel(s)}</div>
+          <div class="footer-note">Iluminación: <b>${s.lighting}%</b></div>
+          <div class="footer-note">Ruido: <b>${s.noise} dB</b></div>
+          <div class="footer-note">Condición: <b>${s.posture}</b></div>
+        </div>
+      `).join('');
+    }
+
+    function updateSummary(){
+      const safe = stations.filter(s => s.state === 'green').length;
+      const pause = stations.filter(s => s.state === 'blue').length;
+      const risk = stations.filter(s => s.state === 'red').length;
+
+      document.getElementById('safeCount').textContent = safe;
+      document.getElementById('pauseCount').textContent = pause;
+      document.getElementById('riskCount').textContent = risk;
+
+      let global = 'BAJO';
+      if (risk >= 2) global = 'ALTO';
+      else if (risk >= 1 || pause >= 1) global = 'MEDIO';
+
+      document.getElementById('globalRisk').textContent = global;
+    }
+
+    function renderAlerts(){
+      const box = document.getElementById('alerts');
+      const items = [
+        {type:'red', text:'Estación 2: postura inadecuada detectada. Se recomienda ajustar altura del asiento y activar pausa.'},
+        {type:'blue', text:'Estación 3: pausa activa registrada correctamente. Seguimiento en curso.'},
+        {type:'green', text:'Sistema operativo: monitoreo continuo activo y sin fallas.'}
+      ];
+
+      box.innerHTML = items.map(a =>
+        `<div class="alert-item ${a.type === 'blue' ? 'blue' : a.type === 'green' ? 'green' : ''}">${a.text}</div>`
+      ).join('');
+
+      window.currentAlerts = items;
+    }
+
+    function addRandomAlert(){
+      const options = [
+        {type:'red', text:'Estación 1: tiempo prolongado en postura fija. Riesgo ergonómico creciente.'},
+        {type:'red', text:'Estación 4: movimiento repetitivo detectado. Recomendación de micropausa.'},
+        {type:'blue', text:'Estación 2: recordatorio de pausa activa enviado al operario.'},
+        {type:'green', text:'Reporte SST actualizado correctamente en el panel.'}
+      ];
+
+      const picked = options[Math.floor(Math.random()*options.length)];
+      window.currentAlerts.unshift(picked);
+
+      const box = document.getElementById('alerts');
+      box.innerHTML = window.currentAlerts.map(a =>
+        `<div class="alert-item ${a.type === 'blue' ? 'blue' : a.type === 'green' ? 'green' : ''}">${a.text}</div>`
+      ).join('');
+    }
+
+    function setScenario(mode){
+      if(mode === 'normal'){
+        stations = [
+          { id:1, worker:"Operario 1", posture:"Adecuada", movement:"Normal", state:"green", lighting:84, noise:49, tip:"Monitoreo estable."},
+          { id:2, worker:"Operario 2", posture:"Adecuada", movement:"Normal", state:"green", lighting:80, noise:51, tip:"Condiciones favorables."},
+          { id:3, worker:"Operario 3", posture:"Adecuada", movement:"Normal", state:"green", lighting:78, noise:46, tip:"Continuar seguimiento."},
+          { id:4, worker:"Operario 4", posture:"Adecuada", movement:"Normal", state:"green", lighting:81, noise:50, tip:"Sin novedades."}
+        ];
+      } else if(mode === 'pause'){
+        stations = [
+          { id:1, worker:"Operario 1", posture:"Adecuada", movement:"Normal", state:"green", lighting:83, noise:48, tip:"Condiciones adecuadas."},
+          { id:2, worker:"Operario 2", posture:"Descanso", movement:"Pausa activa", state:"blue", lighting:75, noise:43, tip:"Pausa activa recomendada y en curso."},
+          { id:3, worker:"Operario 3", posture:"Descanso", movement:"Pausa activa", state:"blue", lighting:74, noise:42, tip:"Recuperación postural en proceso."},
+          { id:4, worker:"Operario 4", posture:"Adecuada", movement:"Normal", state:"green", lighting:82, noise:50, tip:"Monitoreo estable."}
+        ];
+      } else if(mode === 'risk'){
+        stations = [
+          { id:1, worker:"Operario 1", posture:"Tronco inclinado", movement:"Repetitivo", state:"red", lighting:59, noise:66, tip:"Ajustar mesa y realizar pausa."},
+          { id:2, worker:"Operario 2", posture:"Inclinación de cuello", movement:"Repetitivo", state:"red", lighting:54, noise:70, tip:"Corregir silla y postura inmediatamente."},
+          { id:3, worker:"Operario 3", posture:"Muñeca forzada", movement:"Repetitivo", state:"red", lighting:61, noise:65, tip:"Reducir repetición y revisar puesto."},
+          { id:4, worker:"Operario 4", posture:"Adecuada", movement:"Normal", state:"green", lighting:77, noise:51, tip:"Mantener seguimiento."}
+        ];
+      } else {
+        stations = JSON.parse(JSON.stringify(baseStations));
+      }
+
+      renderStations();
+      renderAlerts();
+    }
+
+    renderStations();
+    renderAlerts();
+  </script>
+</body>
+</html>
